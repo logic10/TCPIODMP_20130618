@@ -71,7 +71,7 @@
 
 
 // Hardware I/O pin mappings
-
+#if defined(__32MX695F512L__)
 // LEDs
 #define LED0_TRIS			(TRISDbits.TRISD1)	// Ref D3
 #define LED0_IO				(LATDbits.LATD1)
@@ -137,6 +137,234 @@
 #define EEPROM_SPIBRG		(SPI1BRG)
 #define EEPROM_SPISTAT		(SPI1STAT)
 #define EEPROM_SPISTATbits	(SPI1STATbits)
+
+#elif defined(__32MX695F512H__)
+    #warning "========================================================="
+    #warning "== MR1. Hello Developer please check all configuration =="
+    #warning "========================================================="
+    // LEDs
+    // TODO Please check LEDs configs
+    #define LED0_TRIS			(TRISEbits.TRISE0)	// Ref E0
+    #define LED0_IO				(LATEbits.LATE0)
+    #define LED1_TRIS			(TRISEbits.TRISE1)	// Ref E1
+    #define LED1_IO				(LATEbits.LATE1)
+    #define LED2_TRIS			(TRISEbits.TRISE2)	// Ref E2
+    #define LED2_IO				(LATEbits.LATE2)
+    #define LED3_TRIS			(TRISEbits.TRISE3)	// Ref E3
+    #define LED3_IO				(LATEbits.LATE3)
+    #define LED4_TRIS			(TRISEbits.TRISE4)	// Ref E4
+    #define LED4_IO				(LATEbits.LATE4)
+    #define LED5_TRIS			(TRISEbits.TRISE5)	// Ref E5
+    #define LED5_IO				(LATEbits.LATE5)
+    #define LED6_TRIS			(TRISEbits.TRISE6)	// Ref E6
+    #define LED6_IO				(LATEbits.LATE6)
+    #define LED7_TRIS			(TRISEbits.TRISE7)	// Ref E7	// Note: This is multiplexed with BUTTON1
+    #define LED7_IO				(LATEbits.LATE7)
+    //#define LED_GET()			(*((volatile unsigned char*)(&LATA)))
+    //#define LED_PUT(a)			(*((volatile unsigned char*)(&LATA)) = (a))
+
+    // Momentary push buttons
+    // TODO Please check push button configs
+    #define BUTTON0_TRIS                    (TRISEbits.TRISE5)	// Ref S4
+    #define	BUTTON0_IO			(PORTEbits.RE5)
+    #define BUTTON1_TRIS                    (TRISEbits.TRISE6)	// Ref S5	// Note: This is multiplexed with LED7
+    #define	BUTTON1_IO			(PORTEbits.RE6)
+    #define BUTTON2_TRIS                    (TRISEbits.TRISE7)	// Ref S6
+    #define	BUTTON2_IO			(PORTEbits.RE7)
+    #define BUTTON3_TRIS                    (TRISEbits.TRISE0)	// Ref S3
+    #define	BUTTON3_IO			(PORTEbits.RE0)
+
+    #define UARTTX_TRIS			(TRISFbits.TRISF5)
+    #define UARTTX_IO			(PORTFbits.RF5)
+    #define UARTRX_TRIS			(TRISFbits.TRISF4)
+    #define UARTRX_IO			(PORTFbits.RF4)
+
+    // TODO Please check VETHON_TRIS pins configs
+    #define VETHON_TRIS			TRISDbits.TRISD9
+    #define VETHON_LAT			LATDbits.LATD9
+
+
+    // ENC28J60 I/O pins
+    // TODO Please check ENC28J60 I/O pins configs
+    #define ENC_RST_TRIS                    (TRISEbits.TRISE0)	// Not connected by default
+    #define ENC_RST_IO			(PORTEbits.RE0)
+    #define ENC_CS_TRIS			(TRISGbits.TRISG9)
+    #define ENC_CS_IO			(PORTGbits.RG9)
+    #define ENC_SPI_IF			(IFS1bits.SPI2RXIF)
+    #define ENC_SSPBUF			(SPI2BUF)
+    #define ENC_SPISTATbits                 (SPI2STATbits)
+    #define ENC_SPICON1			(SPI2CON)
+    #define ENC_SPICON1bits                 (SPI2CONbits)
+    #define ENC_SPIBRG			(SPI2BRG)
+
+    // TODO Please check 25LC256 I/O pins configs
+    // 25LC256 I/O pins
+    #define EEPROM_CS_TRIS		(TRISDbits.TRISD11)
+    #define EEPROM_CS_IO		(LATDbits.LATD11)
+    #define EEPROM_SCK_TRIS		(TRISDbits.TRISD10)
+    // TODO Please check EEPROM_SDI_TRIS pins configs
+    //#define EEPROM_SDI_TRIS		(TRISCbits.TRISC4)
+    #define EEPROM_SDI_TRIS		(TRISDbits.TRISD9)
+    #define EEPROM_SDO_TRIS		(TRISDbits.TRISD0)
+    #define EEPROM_SPI_IF		(IFS0bits.SPI1RXIF)
+    #define EEPROM_SSPBUF		(SPI2BUF)
+    #define EEPROM_SPICON1		(SPI2CON)
+    #define EEPROM_SPICON1bits	(SPI2CONbits)
+    #define EEPROM_SPIBRG		(SPI2BRG)
+    #define EEPROM_SPISTAT		(SPI2STAT)
+    #define EEPROM_SPISTATbits	(SPI2STATbits)
+
+#elif defined(__32MX320F128H__)
+  #warning "========================================================="
+    #warning "== MR2. Hello Developer please check all configuration =="
+    #warning "========================================================="
+    // LEDs
+    // TODO Please check LEDs configs
+    #define LED0_TRIS			(TRISEbits.TRISE0)	// Ref E0
+    #define LED0_IO				(LATEbits.LATE0)
+    #define LED1_TRIS			(TRISEbits.TRISE1)	// Ref E1
+    #define LED1_IO				(LATEbits.LATE1)
+    #define LED2_TRIS			(TRISEbits.TRISE2)	// Ref E2
+    #define LED2_IO				(LATEbits.LATE2)
+    #define LED3_TRIS			(TRISEbits.TRISE3)	// Ref E3
+    #define LED3_IO				(LATEbits.LATE3)
+    #define LED4_TRIS			(TRISEbits.TRISE4)	// Ref E4
+    #define LED4_IO				(LATEbits.LATE4)
+    #define LED5_TRIS			(TRISEbits.TRISE5)	// Ref E5
+    #define LED5_IO				(LATEbits.LATE5)
+    #define LED6_TRIS			(TRISEbits.TRISE6)	// Ref E6
+    #define LED6_IO				(LATEbits.LATE6)
+    #define LED7_TRIS			(TRISEbits.TRISE7)	// Ref E7	// Note: This is multiplexed with BUTTON1
+    #define LED7_IO				(LATEbits.LATE7)
+    //#define LED_GET()			(*((volatile unsigned char*)(&LATA)))
+    //#define LED_PUT(a)			(*((volatile unsigned char*)(&LATA)) = (a))
+
+    // Momentary push buttons
+    // TODO Please check push button configs
+    #define BUTTON0_TRIS                    (TRISEbits.TRISE5)	// Ref S4
+    #define	BUTTON0_IO			(PORTEbits.RE5)
+    #define BUTTON1_TRIS                    (TRISEbits.TRISE6)	// Ref S5	// Note: This is multiplexed with LED7
+    #define	BUTTON1_IO			(PORTEbits.RE6)
+    #define BUTTON2_TRIS                    (TRISEbits.TRISE7)	// Ref S6
+    #define	BUTTON2_IO			(PORTEbits.RE7)
+    #define BUTTON3_TRIS                    (TRISEbits.TRISE0)	// Ref S3
+    #define	BUTTON3_IO			(PORTEbits.RE0)
+
+    #define UARTTX_TRIS			(TRISFbits.TRISF5)
+    #define UARTTX_IO			(PORTFbits.RF5)
+    #define UARTRX_TRIS			(TRISFbits.TRISF4)
+    #define UARTRX_IO			(PORTFbits.RF4)
+
+    // TODO Please check VETHON_TRIS pins configs
+    #define VETHON_TRIS			TRISDbits.TRISD9
+    #define VETHON_LAT			LATDbits.LATD9
+
+
+    // ENC28J60 I/O pins
+    // TODO Please check ENC28J60 I/O pins configs
+    #define ENC_RST_TRIS                    (TRISEbits.TRISE0)	// Not connected by default
+    #define ENC_RST_IO			(PORTEbits.RE0)
+    #define ENC_CS_TRIS			(TRISGbits.TRISG9)
+    #define ENC_CS_IO			(PORTGbits.RG9)
+    #define ENC_SPI_IF			(IFS1bits.SPI2RXIF)
+    #define ENC_SSPBUF			(SPI2BUF)
+    #define ENC_SPISTATbits                 (SPI2STATbits)
+    #define ENC_SPICON1			(SPI2CON)
+    #define ENC_SPICON1bits                 (SPI2CONbits)
+    #define ENC_SPIBRG			(SPI2BRG)
+
+    // TODO Please check 25LC256 I/O pins configs
+    // 25LC256 I/O pins
+    #define EEPROM_CS_TRIS		(TRISDbits.TRISD11)
+    #define EEPROM_CS_IO		(LATDbits.LATD11)
+    #define EEPROM_SCK_TRIS		(TRISDbits.TRISD10)
+    // TODO Please check EEPROM_SDI_TRIS pins configs
+    //#define EEPROM_SDI_TRIS		(TRISCbits.TRISC4)
+    #define EEPROM_SDI_TRIS		(TRISDbits.TRISD9)
+    #define EEPROM_SDO_TRIS		(TRISDbits.TRISD0)
+    #define EEPROM_SPI_IF		(IFS0bits.SPI1RXIF)
+    #define EEPROM_SSPBUF		(SPI2BUF)
+    #define EEPROM_SPICON1		(SPI2CON)
+    #define EEPROM_SPICON1bits	(SPI2CONbits)
+    #define EEPROM_SPIBRG		(SPI2BRG)
+    #define EEPROM_SPISTAT		(SPI2STAT)
+    #define EEPROM_SPISTATbits	(SPI2STATbits)
+#elif defined(__32MX340F512H__)
+  #warning "========================================================="
+    #warning "== MR3. Hello Developer please check all configuration =="
+    #warning "========================================================="
+    // LEDs
+    // TODO Please check LEDs configs
+    #define LED0_TRIS			(TRISEbits.TRISE0)	// Ref E0
+    #define LED0_IO				(LATEbits.LATE0)
+    #define LED1_TRIS			(TRISEbits.TRISE1)	// Ref E1
+    #define LED1_IO				(LATEbits.LATE1)
+    #define LED2_TRIS			(TRISEbits.TRISE2)	// Ref E2
+    #define LED2_IO				(LATEbits.LATE2)
+    #define LED3_TRIS			(TRISEbits.TRISE3)	// Ref E3
+    #define LED3_IO				(LATEbits.LATE3)
+    #define LED4_TRIS			(TRISEbits.TRISE4)	// Ref E4
+    #define LED4_IO				(LATEbits.LATE4)
+    #define LED5_TRIS			(TRISEbits.TRISE5)	// Ref E5
+    #define LED5_IO				(LATEbits.LATE5)
+    #define LED6_TRIS			(TRISEbits.TRISE6)	// Ref E6
+    #define LED6_IO				(LATEbits.LATE6)
+    #define LED7_TRIS			(TRISEbits.TRISE7)	// Ref E7	// Note: This is multiplexed with BUTTON1
+    #define LED7_IO				(LATEbits.LATE7)
+    //#define LED_GET()			(*((volatile unsigned char*)(&LATA)))
+    //#define LED_PUT(a)			(*((volatile unsigned char*)(&LATA)) = (a))
+
+    // Momentary push buttons
+    // TODO Please check push button configs
+    #define BUTTON0_TRIS                    (TRISEbits.TRISE5)	// Ref S4
+    #define	BUTTON0_IO			(PORTEbits.RE5)
+    #define BUTTON1_TRIS                    (TRISEbits.TRISE6)	// Ref S5	// Note: This is multiplexed with LED7
+    #define	BUTTON1_IO			(PORTEbits.RE6)
+    #define BUTTON2_TRIS                    (TRISEbits.TRISE7)	// Ref S6
+    #define	BUTTON2_IO			(PORTEbits.RE7)
+    #define BUTTON3_TRIS                    (TRISEbits.TRISE0)	// Ref S3
+    #define	BUTTON3_IO			(PORTEbits.RE0)
+
+    #define UARTTX_TRIS			(TRISFbits.TRISF5)
+    #define UARTTX_IO			(PORTFbits.RF5)
+    #define UARTRX_TRIS			(TRISFbits.TRISF4)
+    #define UARTRX_IO			(PORTFbits.RF4)
+
+    // TODO Please check VETHON_TRIS pins configs
+    #define VETHON_TRIS			TRISDbits.TRISD9
+    #define VETHON_LAT			LATDbits.LATD9
+
+
+    // ENC28J60 I/O pins
+    // TODO Please check ENC28J60 I/O pins configs
+    #define ENC_RST_TRIS                    (TRISEbits.TRISE0)	// Not connected by default
+    #define ENC_RST_IO			(PORTEbits.RE0)
+    #define ENC_CS_TRIS			(TRISGbits.TRISG9)
+    #define ENC_CS_IO			(PORTGbits.RG9)
+    #define ENC_SPI_IF			(IFS1bits.SPI2RXIF)
+    #define ENC_SSPBUF			(SPI2BUF)
+    #define ENC_SPISTATbits                 (SPI2STATbits)
+    #define ENC_SPICON1			(SPI2CON)
+    #define ENC_SPICON1bits                 (SPI2CONbits)
+    #define ENC_SPIBRG			(SPI2BRG)
+
+    // TODO Please check 25LC256 I/O pins configs
+    // 25LC256 I/O pins
+    #define EEPROM_CS_TRIS		(TRISDbits.TRISD11)
+    #define EEPROM_CS_IO		(LATDbits.LATD11)
+    #define EEPROM_SCK_TRIS		(TRISDbits.TRISD10)
+    // TODO Please check EEPROM_SDI_TRIS pins configs
+    //#define EEPROM_SDI_TRIS		(TRISCbits.TRISC4)
+    #define EEPROM_SDI_TRIS		(TRISDbits.TRISD9)
+    #define EEPROM_SDO_TRIS		(TRISDbits.TRISD0)
+    #define EEPROM_SPI_IF		(IFS0bits.SPI1RXIF)
+    #define EEPROM_SSPBUF		(SPI2BUF)
+    #define EEPROM_SPICON1		(SPI2CON)
+    #define EEPROM_SPICON1bits	(SPI2CONbits)
+    #define EEPROM_SPIBRG		(SPI2BRG)
+    #define EEPROM_SPISTAT		(SPI2STAT)
+    #define EEPROM_SPISTATbits	(SPI2STATbits)
+#endif
 
 
 // LCD Module I/O pins.  NOTE: On the Explorer 16, the LCD is wired to the 

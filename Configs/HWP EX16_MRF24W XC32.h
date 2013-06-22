@@ -88,8 +88,8 @@
 #define LED6_IO				(LATAbits.LATA6)
 #define LED7_TRIS			(LATAbits.LATA7)	// Ref D10;  Note: This is multiplexed with BUTTON1, so this LED can't be used.  However, it will glow very dimmly due to a weak pull up resistor.
 #define LED7_IO				(LATAbits.LATA7)
-#define LED_GET()			(*((volatile unsigned char*)(&LATA)))
-#define LED_PUT(a)			(*((volatile unsigned char*)(&LATA)) = (a))
+//#define LED_GET()			(*((volatile unsigned char*)(&LATA)))
+//#define LED_PUT(a)			(*((volatile unsigned char*)(&LATA)) = (a))
 
 // Momentary push buttons
 #define BUTTON0_TRIS		(TRISDbits.TRISD13)	// Ref S4

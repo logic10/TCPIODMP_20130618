@@ -92,6 +92,9 @@ BYTE AN0String[8];
 static void InitAppConfig(void);
 static void InitializeBoard(void);
 static void ProcessIO(void);
+
+void LED_PUT(BYTE a);
+
 #if defined(WF_CS_TRIS)
     void WF_Connect(void);
     #if !defined(MRF24WG)
@@ -561,7 +564,7 @@ void WF_Connect(void)
 }   
 #endif /* WF_CS_TRIS */
 
-//void LED_PUT(BYTE a);
+
 void LED_PUT(BYTE a)
 {
 	LED0_IO = a & 0x01;
