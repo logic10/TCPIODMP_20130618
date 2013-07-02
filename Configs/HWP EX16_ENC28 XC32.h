@@ -212,9 +212,8 @@
     #define EEPROM_SPICON1bits	(SPI2CONbits)
     #define EEPROM_SPIBRG		(SPI2BRG)
     #define EEPROM_SPISTAT		(SPI2STAT)
-    #define EEPROM_SPISTATbits	(SPI2STATbits)
-
-#elif defined(__32MX320F128H__)
+    #define EEPROM_SPISTATbits	(SPI2STATbits) 
+#elif defined(__32MX340F256H__)
   #warning "========================================================="
     #warning "== MR2. Hello Developer please check all configuration =="
     #warning "========================================================="

@@ -74,9 +74,6 @@
 		#endif
 		static HTTP_IO_RESULT HTTPPostMD5(void);
 	#endif
-	#if defined(STACK_USE_AUTOUPDATE_HTTPSERVER) && defined(WF_CS_TRIS) && defined(MRF24WG)
-		static HTTP_IO_RESULT HTTPPostImage(void);
-	#endif
 	#if defined(STACK_USE_HTTP_APP_RECONFIG)
 		extern APP_CONFIG AppConfig;
 		static HTTP_IO_RESULT HTTPPostConfig(void);
@@ -125,6 +122,14 @@ static BOOL lastFailure = FALSE;
 #if defined(HTTP_USE_AUTHENTICATION)
 BYTE HTTPNeedsAuth(BYTE* cFile)
 {
+
+#if defined STACK_USE_MDD
+	BYTE i=0;
+	for(i=0;i<20;i++) //Convert filename to lower case
+		if((cFile[i] >= (BYTE)'A') && (cFile[i] <= (BYTE)'Z'))
+			cFile[i] += 'a' - 'A';
+#endif
+
 	// If the filename begins with the folder "protect", then require auth
 	if(memcmppgm2ram(cFile, (ROM void*)"protect", 7) == 0)
 		return 0x00;		// Authentication will be needed later
@@ -188,11 +193,38 @@ HTTP_IO_RESULT HTTPExecuteGet(void)
 {
 	BYTE *ptr;
 	BYTE filename[20];
-	
+
 	// Load the file name
 	// Make sure BYTE filename[] above is large enough for your longest name
-	MPFSGetFilename(curHTTP.file, filename, 20);
+
+#if defined STACK_USE_MDD
+	BYTE i,cntr1=0,cntr2=0,filext=0;
+	do
+	{
+		if(curHTTP.file->name[cntr2] != 0x20)
+		{
+			filename[cntr1]=curHTTP.file->name[cntr2];
+			cntr1++;
+		}
+		else if(filext!=TRUE)
+		{
+			filename[cntr1]=0x2E;
+			cntr1++;
+			filext=TRUE;
+		}
+
+		cntr2++;
+
+	}while(cntr2 !=FILE_NAME_SIZE);
+
+	for(i=0;i<20;i++) //Convert filename to lower case
+		if((filename[i] >= (BYTE)'A') && (filename[i] <= (BYTE)'Z'))
+			filename[i] += 'a' - 'A';
 	
+#else
+	MPFSGetFilename(curHTTP.file, filename, 20);
+#endif	
+
 	// If its the forms.htm page
 	if(!memcmppgm2ram(filename, "forms.htm", 9))
 	{
@@ -283,7 +315,36 @@ HTTP_IO_RESULT HTTPExecutePost(void)
 	
 	// Load the file name
 	// Make sure BYTE filename[] above is large enough for your longest name
-	MPFSGetFilename(curHTTP.file, filename, sizeof(filename));
+#if defined STACK_USE_MDD
+	BYTE i,cntr1=0,cntr2=0,filext=0;
+	BYTE cwdPath[20];
+	char *cwdPathPtr=NULL;
+	
+	do
+	{
+		if(curHTTP.file->name[cntr2] != 0x20)
+		{
+			filename[cntr1]=curHTTP.file->name[cntr2];
+			cntr1++;
+		}
+		else if(filext!=TRUE)
+		{
+			filename[cntr1]=0x2E;  //File extension starts after this
+			cntr1++;
+			filext=TRUE;
+		}
+
+		cntr2++;
+
+	}while(cntr2 !=FILE_NAME_SIZE);
+
+	for(i=0;i<20;i++) //Convert file name to lower case
+		if((filename[i] >= (BYTE)'A') && (filename[i] <= (BYTE)'Z'))
+			filename[i] += 'a' - 'A';
+	
+#else
+	MPFSGetFilename(curHTTP.file, filename, 20);
+#endif
 	
 #if defined(USE_LCD)
 	if(!memcmppgm2ram(filename, "forms.htm", 9))
@@ -294,29 +355,63 @@ HTTP_IO_RESULT HTTPExecutePost(void)
 	if(!memcmppgm2ram(filename, "upload.htm", 10))
 		return HTTPPostMD5();
 #endif
-#if defined(STACK_USE_AUTOUPDATE_HTTPSERVER) && defined(WF_CS_TRIS) && defined(MRF24WG)
-	if(!memcmppgm2ram(filename, "upload_Image.htm", 16))
-		return HTTPPostImage();
-#endif
 
 #if defined(STACK_USE_HTTP_APP_RECONFIG)
 	if(!memcmppgm2ram(filename, "protect/config.htm", 18))
 		return HTTPPostConfig();
-	#if defined(STACK_USE_SNMP_SERVER)
-	else if(!memcmppgm2ram(filename, "snmp/snmpconfig.htm", 19))
-		return HTTPPostSNMPCommunity();
-	#endif
 #endif
 
-#if defined(STACK_USE_SMTP_CLIENT)
-	if(!strcmppgm2ram((char*)filename, "email/index.htm"))
-		return HTTPPostEmail();
+
+#ifdef STACK_USE_MDD
+
+	#if defined(STACK_USE_SMTP_CLIENT) || defined(STACK_USE_DYNAMICDNS_CLIENT)
+		cwdPathPtr=FSgetcwd ((char *) cwdPath, 20); //We are taking 20 bytes of buffer to store the CWD
+
+		for(i=0;i<20;i++) //Convert CWD path string to lower case
+			if((cwdPathPtr[i] >= (BYTE)'A') && (cwdPathPtr[i] <= (BYTE)'Z'))
+				cwdPathPtr[i] += 'a' - 'A';
+
+		for(i=0;i<20;i++) 
+		{
+			if(cwdPathPtr[i] == (BYTE)'e') //email
+			{	
+				if(!memcmppgm2ram(&cwdPathPtr[i], "email",5))//is CWD == email ?
+				{
+					//In MDD, to open a file, we change current working directory to
+					//the file directory. Hence only the reuqested file name need to be compared. 
+					if(!memcmppgm2ram(filename, "index.htm",9))
+						return HTTPPostEmail();
+				}
+			}
+			else if(cwdPathPtr[i] == (BYTE)'d') //dyndns
+			{	
+				if(!memcmppgm2ram(&cwdPathPtr[i], "dyndns",6))//is CWD == dyndns ?
+				{
+					if(!memcmppgm2ram(filename, "index.htm",9))
+						return HTTPPostDDNSConfig();
+				}
+			}
+
+			
+		}
+		if(i==21) //This means current working directory is not "\email"
+			return HTTP_IO_DONE; //return as we cant process this request.
+			
+	#else
+
+		#if defined(STACK_USE_SMTP_CLIENT)
+			if(!strcmppgm2ram((char*)filename, "email/index.htm"))
+				return HTTPPostEmail();
+		#endif
+			
+		#if defined(STACK_USE_DYNAMICDNS_CLIENT)
+			if(!strcmppgm2ram((char*)filename, "dyndns/index.htm"))
+				return HTTPPostDDNSConfig();
+		#endif
+
+	#endif
 #endif
-	
-#if defined(STACK_USE_DYNAMICDNS_CLIENT)
-	if(!strcmppgm2ram((char*)filename, "dyndns/index.htm"))
-		return HTTPPostDDNSConfig();
-#endif
+		
 
 	return HTTP_IO_DONE;
 }
@@ -680,277 +775,6 @@ static HTTP_IO_RESULT HTTPPostSNMPCommunity(void)
 
 /*****************************************************************************
   Function:
-	static HTTP_IO_RESULT HTTPPostImage(void)
-
-  Summary:
-	Processes the file upload form on upload_Image.htm
-
-  Description:
-	This function demonstrates the processing of file uploads.  First, the
-	function locates the file data, skipping over any headers that arrive.
-	Second, it reads the file 64 bytes at a time and hashes that data.  Once
-	all data has been received, the function calculates the MD5 sum and
-	stores it in curHTTP.data.
-
-	After the headers, the first line from the form will be the MIME 
-	separator.  Following that is more headers about the file, which we 
-	discard.  After another CRLFCRLF, the file data begins, and we read 
-	it 16 bytes at a time and add that to the update.  The reading
-	terminates when the separator string is encountered again on its own 
-	line.  Notice that the actual file data is trashed in this process, 
-	allowing us to accept files of arbitrary size, not limited by RAM.  
-	Also notice that the data buffer is used as an arbitrary storage array 
-	for the result.  The ~uploadeImage~ callback reads this data later to 
-	send back to the client.
-	
-  Precondition:
-	None
-
-  Parameters:
-	None
-
-  Return Values:
-	HTTP_IO_DONE - all parameters have been processed
-	HTTP_IO_WAITING - the function is pausing to continue later
-	HTTP_IO_NEED_DATA - data needed by this function has not yet arrived
-  ***************************************************************************/
-
-#if defined(STACK_USE_AUTOUPDATE_HTTPSERVER) && defined(WF_CS_TRIS) && defined(MRF24WG)
-
-		UINT32 ImageUpdate_Addr=0;
-		UINT8 Flag_ImageUpdate_running=0;
-		UINT32 ImageUpdate_Checksum = 0;
-		UINT32 ImageUpdate_Size = 0;
-static HTTP_IO_RESULT HTTPPostImage(void)
-{
-	WORD lenA, lenB;
-	UINT8 buf_im[32]={0};
-	
-	#define SM_IMAGE_READ_SEPARATOR	(0u)
-	#define SM_IMAGE_SKIP_TO_DATA	(1u)
-	#define SM_IMAGE_READ_DATA		(2u)
-	#define SM_IMAGE_POST_COMPLETE	(3u)
-	
-	// Don't care about curHTTP.data at this point, so use that for buffer
-	switch(curHTTP.smPost)
-	{
-		// Just started, so try to find the separator string
-		case SM_IMAGE_READ_SEPARATOR:
-			
-			// See if a CRLF is in the buffer
-			lenA = TCPFindROMArray(sktHTTP, (ROM BYTE*)"\r\n", 2, 0, FALSE);
-			if(lenA == 0xffff)
-			{//if not, ask for more data
-				return HTTP_IO_NEED_DATA;
-			}
-		
-			// If so, figure out where the last byte of data is
-			// Data ends at CRLFseparator--CRLF, so 6+len bytes
-			curHTTP.byteCount -= lenA + 6;
-			
-			// Read past the CRLF
-			curHTTP.byteCount -= TCPGetArray(sktHTTP, NULL, lenA+2);
-			
-			// Save the next state (skip to CRLFCRLF)
-			curHTTP.smPost = SM_IMAGE_SKIP_TO_DATA;
-			
-			// No break...continue reading the headers if possible
-			#if defined(MRF24WG) // Intialize AutoUpdate
-			{
-				UINT8 buf_command[4];
-				Flag_ImageUpdate_running = 1;
-				ImageUpdate_Addr=12;
-				ImageUpdate_Checksum = 0;
-				ImageUpdate_Size = 0;
-				putrsUART("Update Image Begin..\r\n");
-
-				buf_command[1]=UPDATE_SERITY_KEY_1; 
-				buf_command[2]=UPDATE_SERITY_KEY_2; 
-				buf_command[3]=UPDATE_SERITY_KEY_3; 
-				
-				buf_command[0]=UPDATE_CMD_ERASE1;  //Erase bank1				 
-				SendSetParamMsg(PARAM_FLASH_update, buf_command, 4);
-				DelayMs(000);
-				buf_command[0]=UPDATE_CMD_CPY_0TO1; //Copy bank0 to bank1
-				buf_command[1]=UPDATE_SERITY_KEY_1; 
-				buf_command[2]=UPDATE_SERITY_KEY_2; 
-				buf_command[3]=UPDATE_SERITY_KEY_3; 
-				SendSetParamMsg(PARAM_FLASH_update, buf_command, 4);
-				DelayMs(000);
-				buf_command[0]=UPDATE_CMD_ERASE0; //Erase bank0
-				buf_command[1]=UPDATE_SERITY_KEY_1; 
-				buf_command[2]=UPDATE_SERITY_KEY_2; 
-				buf_command[3]=UPDATE_SERITY_KEY_3; 
-				SendSetParamMsg(PARAM_FLASH_update, buf_command, 4);
-				DelayMs(000);
-			}
-			#endif
-		// Skip the headers
-		case SM_IMAGE_SKIP_TO_DATA:
-			// Look for the CRLFCRLF
-			lenA = TCPFindROMArray(sktHTTP, (ROM BYTE*)"\r\n\r\n", 4, 0, FALSE);
-	
-			if(lenA != 0xffff)
-			{// Found it, so remove all data up to and including
-				lenA = TCPGetArray(sktHTTP, NULL, lenA+4);
-				curHTTP.byteCount -= lenA;
-				curHTTP.smPost = SM_IMAGE_READ_DATA;
-			}
-			else
-			{// Otherwise, remove as much as possible
-				lenA = TCPGetArray(sktHTTP, NULL, TCPIsGetReady(sktHTTP) - 4);
-				curHTTP.byteCount -= lenA;
-			
-				// Return the need more data flag
-				return HTTP_IO_NEED_DATA;
-			}
-			
-			// No break if we found the header terminator
-			
-		// Read and hash file data
-		case SM_IMAGE_READ_DATA:
-			// Find out how many bytes are available to be read
-			lenA = TCPIsGetReady(sktHTTP);
-			if(lenA > curHTTP.byteCount)
-				lenA = curHTTP.byteCount;
-			while(lenA > 0u)
-			{// Add up to 64 bytes at a time to the sum
-				lenB = TCPGetArray(sktHTTP, curHTTP.data, (lenA < 64u)?lenA:64);
-				curHTTP.byteCount -= lenB;
-				lenA -= lenB;
-        #if defined(MRF24WG)        //AutoUpdate, Write data into Module
-				{
-					
-					int i;
-					UINT8 buf[68]={0};
-					//Odd or Even 
-					static BOOL Odd_or_Even = FALSE;
-					static UINT8 Save_Odd =0;
-					if(ImageUpdate_Size == 0) 
-						{ Odd_or_Even = FALSE; Save_Odd =0;} //First byte
-					
-					{ //Size and CheckSum
-						
-						for(i=0;i<lenB;i++)
-						{
-							if((ImageUpdate_Size % 4) == 0) ImageUpdate_Checksum += (UINT32)curHTTP.data[i]<<24;
-							if((ImageUpdate_Size % 4) == 1) ImageUpdate_Checksum += (UINT32)curHTTP.data[i]<<16;
-							if((ImageUpdate_Size % 4) == 2) ImageUpdate_Checksum += (UINT32)curHTTP.data[i]<<8;
-							if((ImageUpdate_Size % 4) == 3) ImageUpdate_Checksum += (UINT32)curHTTP.data[i];
-							
-							ImageUpdate_Size ++;
-						}
-						
-	 					
-						if(TRUE == Odd_or_Even)  //Last it is Odd
-						{
-							buf[4]=Save_Odd;
-							for(i=0;i<lenB;i++)  buf[5+i] = curHTTP.data[i];
-							lenB++;
-						}
-						else 
-						{
-							for(i=0;i<lenB;i++)  buf[4+i] = curHTTP.data[i];
-						}
-
-						if((lenB%2)==1)  //Odd now?
-						{
-							Odd_or_Even = TRUE;
-							Save_Odd = buf[4+lenB-1];
-							lenB --;
-						}
-						else
-						{
-							Odd_or_Even = FALSE;
-						}	
-					}
-					if(lenB>32)
-					{
-							buf[0]=(ImageUpdate_Addr&0x00FF0000)>>16;
-							buf[1]=(ImageUpdate_Addr&0x0000FF00)>>8;
-							buf[2]=(ImageUpdate_Addr&0xFF);
-							buf[3]=32;
-							SendSetParamMsg(PARAM_FLASH_WRITE, buf, 32+4);
-							ImageUpdate_Addr += 32;
-							DelayMs(1);
-							
-							lenB -=32;
-							buf[0+32]=(ImageUpdate_Addr&0x00FF0000)>>16;
-							buf[1+32]=(ImageUpdate_Addr&0x0000FF00)>>8;
-							buf[2+32]=(ImageUpdate_Addr&0xFF);
-							buf[3+32]=lenB;
-							SendSetParamMsg(PARAM_FLASH_WRITE, buf+32, lenB+4);
-							ImageUpdate_Addr += lenB;
-							DelayMs(1);
-					}
-					else
-					{
-							buf[0]=(ImageUpdate_Addr&0x00FF0000)>>16;
-							buf[1]=(ImageUpdate_Addr&0x0000FF00)>>8;
-							buf[2]=(ImageUpdate_Addr&0xFF);
-							buf[3]=lenB;
-							SendSetParamMsg(PARAM_FLASH_WRITE, buf, lenB+4);
-							ImageUpdate_Addr += lenB;
-							DelayMs(1);
-					}
-					
-				}
-				#endif
-			}
-					
-			// If we've read all the data
-			if(curHTTP.byteCount == 0u)
-			{// Calculate and copy result to curHTTP.data for printout
-				curHTTP.smPost = SM_IMAGE_POST_COMPLETE;
-        #if defined(MRF24WG)   		//AutoUpdate , complete update				
-				{
-					#define PATCH_SIGNATURE              (UINT32)(~(0x00047fbc))
-					UINT8 SignatureData[4+12];
-                                        UINT8 buf_command[4]={UPDATE_CMD_CPY_CALIBRATION,(UINT8)(UPDATE_SERITY_KEY>>16),(UINT8)(UPDATE_SERITY_KEY>>8), (UINT8)UPDATE_SERITY_KEY}; //Copy last 128 Bytes from Bank0 to Bank1
-					ImageUpdate_Addr = 0;
-					SignatureData[0]=(ImageUpdate_Addr&0x00FF0000)>>16;
-					SignatureData[1]=(ImageUpdate_Addr&0x0000FF00)>>8;
-					SignatureData[2]=(ImageUpdate_Addr&0xFF);
-					SignatureData[3]=12;
-					
-					SignatureData[4+0]=(PATCH_SIGNATURE>>24)&0xFF;
-					SignatureData[4+1]=(PATCH_SIGNATURE>>16)&0xFF;
-					SignatureData[4+2]=(PATCH_SIGNATURE>>8 )&0xFF;
-					SignatureData[4+3]=(PATCH_SIGNATURE)&0xFF;
-					
-					SignatureData[4+4]=(ImageUpdate_Size>>24)&0xFF;
-					SignatureData[4+5]=(ImageUpdate_Size>>16)&0xFF;
-					SignatureData[4+6]=(ImageUpdate_Size>>8 )&0xFF;
-					SignatureData[4+7]=(ImageUpdate_Size)&0xFF;
-
-					SignatureData[4+8] =(ImageUpdate_Checksum>>24)&0xFF;
-					SignatureData[4+9] =(ImageUpdate_Checksum>>16)&0xFF;
-					SignatureData[4+10]=(ImageUpdate_Checksum>>8 )&0xFF;
-					SignatureData[4+11]=(ImageUpdate_Checksum)&0xFF;
-					SendSetParamMsg(PARAM_FLASH_WRITE, SignatureData, sizeof(SignatureData));
-
-
-					sprintf((char *)buf_im,"Size=%x, sum=%x\r\n", (unsigned int)ImageUpdate_Size, (unsigned int)ImageUpdate_Checksum);
-					putsUART((char *)buf_im);
-					
-					SendSetParamMsg(PARAM_FLASH_update, buf_command, 4);
-					Flag_ImageUpdate_running=0;
-					putrsUART("Update Image Done!\r\n");
-				}
-				#endif
-				
-				return HTTP_IO_DONE;
-			}
-				
-			// Ask for more data
-			return HTTP_IO_NEED_DATA;
-	}
-	
-	return HTTP_IO_DONE;
-}
-#endif
-/*****************************************************************************
-  Function:
 	static HTTP_IO_RESULT HTTPPostMD5(void)
 
   Summary:
@@ -985,7 +809,6 @@ static HTTP_IO_RESULT HTTPPostImage(void)
 	HTTP_IO_WAITING - the function is pausing to continue later
 	HTTP_IO_NEED_DATA - data needed by this function has not yet arrived
   ***************************************************************************/
-
 #if defined(STACK_USE_HTTP_MD5_DEMO)
 static HTTP_IO_RESULT HTTPPostMD5(void)
 {
@@ -1860,38 +1683,6 @@ void HTTPPrint_cookiename(void)
 	
 	return;
 }
-
-void HTTPPrint_uploadeImage(void)
-#if defined(STACK_USE_AUTOUPDATE_HTTPSERVER) && defined(WF_CS_TRIS) && defined(MRF24WG)
-{
-	BYTE i;
-
-	// Set a flag to indicate not finished
-	curHTTP.callbackPos = 1;
-	
-	// Make sure there's enough output space
-	if(TCPIsPutReady(sktHTTP) < 32u + 37u + 5u)
-		return;
-	
-	TCPPutROMString(sktHTTP, (ROM BYTE*)"<b>Image Checksum is:</b><br />");
-
-	// Write a byte of the md5 sum at a time
-	for(i = 0; i < 16u; i++)
-	{
-		TCPPut(sktHTTP, btohexa_high(curHTTP.data[i]));
-		TCPPut(sktHTTP, btohexa_low(curHTTP.data[i]));
-		if((i & 0x03) == 3u)
-			TCPPut(sktHTTP, ' ');
-	}
-	
-	curHTTP.callbackPos = 0x00;
-	return;
-}
-#else
-{
-	return;
-}
-#endif
 
 void HTTPPrint_uploadedmd5(void)
 {

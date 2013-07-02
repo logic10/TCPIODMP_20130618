@@ -4,6 +4,7 @@ build/XC32-EX16_ENC28/production/_ext/1954962658/SPIEEPROM.o:  \
  ../Configs/HWP\ EX16_ENC28\ XC32.h  \
 ../../../Microchip/Include/Compiler.h  \
  ../../../Microchip/Include/TCPIP\ Stack/TCPIP.h  \
+ ../../../Microchip/Include/TCPIP\ Stack/../Compiler.h  \
 ../TCPIPConfig.h  \
  ../Configs/TCPIP\ ENC28.h  \
  ../../../Microchip/Include/TCPIP\ Stack/StackTsk.h  \
